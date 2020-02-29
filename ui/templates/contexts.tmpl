@@ -1,0 +1,8 @@
+{{template "_header.tmpl"}}
+
+	<h2>Contexts</h2>
+	{{range .Contexts}}
+		<a href="/{{.Name}}/deployments">{{.Name}}</a>
+	{{end}}
+
+{{template "_footer.tmpl"}}

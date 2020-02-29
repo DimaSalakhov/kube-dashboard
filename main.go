@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -37,11 +38,21 @@ func MustNewHanlder() *handler {
 }
 
 func (h *handler) getContexts(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("contexts: "))
-
+	data := struct {
+		Contexts []struct {
+			Name string
+		}
+	}{}
+	contexts := make([]struct{ Name string }, 0, len(h.kube.config.Contexts))
 	for _, v := range h.kube.config.Contexts {
-		w.Write([]byte(v.Name))
+		contexts = append(contexts, struct{ Name string }{Name: v.Name})
+	}
+	data.Contexts = contexts
+
+	partials := template.Must(template.ParseGlob("ui/templates/partials/*.tmpl"))
+	_, err := partials.ParseFiles("ui/templates/contexts.tmpl")
+	if err = partials.ExecuteTemplate(w, "contexts.tmpl", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
