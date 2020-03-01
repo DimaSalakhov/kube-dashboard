@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"html/template"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -38,22 +36,14 @@ func MustNewHanlder() *handler {
 }
 
 func (h *handler) getContexts(w http.ResponseWriter, r *http.Request) {
-	data := struct {
-		Contexts []struct {
-			Name string
-		}
-	}{}
 	contexts := make([]struct{ Name string }, 0, len(h.kube.config.Contexts))
 	for _, v := range h.kube.config.Contexts {
 		contexts = append(contexts, struct{ Name string }{Name: v.Name})
 	}
-	data.Contexts = contexts
 
-	partials := template.Must(template.ParseGlob("ui/templates/partials/*.tmpl"))
-	_, err := partials.ParseFiles("ui/templates/contexts.tmpl")
-	if err = partials.ExecuteTemplate(w, "contexts.tmpl", data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	renderTemplate(w, "ui/templates/contexts.tmpl", struct{ Contexts []struct{ Name string } }{
+		Contexts: contexts,
+	})
 }
 
 func (h *handler) getDeployments(w http.ResponseWriter, r *http.Request) {
@@ -74,8 +64,5 @@ func (h *handler) getDeployments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, d := range deployments.Items {
-		w.Write([]byte(fmt.Sprintf(" * %s (%d replicas)\n", d.Name, *d.Spec.Replicas)))
-	}
-	w.WriteHeader(http.StatusOK)
+	renderTemplate(w, "ui/templates/deployments.tmpl", deployments.Items)
 }
