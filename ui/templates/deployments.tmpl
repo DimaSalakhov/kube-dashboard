@@ -12,7 +12,7 @@
 			<td>{{.Name}}</td>
 			<td>
 				{{range .Spec.Template.Spec.Containers}}
-					{{.Image}}
+					{{formatContainerImage .Image}}
 				{{end}}
 			</td>
 		</tr>
