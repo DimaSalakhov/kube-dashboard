@@ -5,6 +5,7 @@ import (
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -35,15 +36,25 @@ func MustNewHanlder() *handler {
 	}
 }
 
+type breadcrumb struct {
+	Url  string
+	Text string
+}
+
 func (h *handler) getContexts(w http.ResponseWriter, r *http.Request) {
 	contexts := make([]struct{ Name string }, 0, len(h.kube.config.Contexts))
 	for _, v := range h.kube.config.Contexts {
 		contexts = append(contexts, struct{ Name string }{Name: v.Name})
 	}
 
-	renderTemplate(w, "ui/templates/contexts.tmpl", struct{ Contexts []struct{ Name string } }{
-		Contexts: contexts,
-	})
+	renderTemplate(w, "ui/templates/contexts.tmpl",
+		struct {
+			Contexts    []struct{ Name string }
+			Breadcrumbs []breadcrumb
+		}{
+			Contexts:    contexts,
+			Breadcrumbs: []breadcrumb{},
+		})
 }
 
 func (h *handler) getDeployments(w http.ResponseWriter, r *http.Request) {
@@ -64,5 +75,15 @@ func (h *handler) getDeployments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	renderTemplate(w, "ui/templates/deployments.tmpl", deployments.Items)
+	renderTemplate(w, "ui/templates/deployments.tmpl",
+		struct {
+			Deployments []corev1.Deployment
+			Breadcrumbs []breadcrumb
+		}{
+			Deployments: deployments.Items,
+			Breadcrumbs: []breadcrumb{
+				{Text: currentContext},
+				{Text: "Deployments"},
+			},
+		})
 }

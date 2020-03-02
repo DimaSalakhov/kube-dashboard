@@ -1,12 +1,13 @@
-{{template "_header.tmpl"}}
+{{template "_header.tmpl" .Breadcrumbs}}
 
 	<h2>Deployments</h2>
+
 	<table style="width:100%">
   <tr>
     <th>Name</th>
     <th>Img</th>
   </tr>
-	{{range .}}
+	{{range .Deployments}}
 		<tr>
 			<td>{{.Name}}</td>
 			<td>

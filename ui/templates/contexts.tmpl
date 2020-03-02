@@ -1,8 +1,9 @@
-{{template "_header.tmpl"}}
+{{template "_header.tmpl" .Breadcrumbs}}
 
 	<h2>Contexts</h2>
+
 	{{range .Contexts}}
-		<a href="/{{.Name}}/deployments">{{.Name}}</a>
+		<a href="/{{.Name}}/deployments" class="btn btn-primary" role="button">{{.Name}}</a>
 	{{end}}
 
 {{template "_footer.tmpl"}}
