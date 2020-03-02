@@ -36,24 +36,17 @@ func MustNewHanlder() *handler {
 	}
 }
 
-type breadcrumb struct {
-	Url  string
-	Text string
-}
-
 func (h *handler) getContexts(w http.ResponseWriter, r *http.Request) {
 	contexts := make([]struct{ Name string }, 0, len(h.kube.config.Contexts))
 	for _, v := range h.kube.config.Contexts {
 		contexts = append(contexts, struct{ Name string }{Name: v.Name})
 	}
 
-	renderTemplate(w, "ui/templates/contexts.tmpl",
+	renderTemplate(w, "ui/templates/contexts.tmpl", []breadcrumb{},
 		struct {
-			Contexts    []struct{ Name string }
-			Breadcrumbs []breadcrumb
+			Contexts []struct{ Name string }
 		}{
-			Contexts:    contexts,
-			Breadcrumbs: []breadcrumb{},
+			Contexts: contexts,
 		})
 }
 
@@ -76,14 +69,13 @@ func (h *handler) getDeployments(w http.ResponseWriter, r *http.Request) {
 	}
 
 	renderTemplate(w, "ui/templates/deployments.tmpl",
+		[]breadcrumb{
+			{Text: currentContext},
+			{Text: "Deployments"},
+		},
 		struct {
 			Deployments []corev1.Deployment
-			Breadcrumbs []breadcrumb
 		}{
 			Deployments: deployments.Items,
-			Breadcrumbs: []breadcrumb{
-				{Text: currentContext},
-				{Text: "Deployments"},
-			},
 		})
 }

@@ -17,7 +17,8 @@
 				{{if (eq 1 (len (slice $breadcrumbs $i)))}}
 					<li class="breadcrumb-item active" aria-current="page">{{$v.Text}}</li>
 				{{else}}
-					{{if $v.Url}}
+					{{if $v.URL}}
+					<li class="breadcrumb-item"><a href="{{$v.URL}}">{{$v.Text}}</a></li>
 					{{else}}
 						<li class="breadcrumb-item">{{$v.Text}}</li>
 					{{end}}
