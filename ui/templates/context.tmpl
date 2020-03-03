@@ -1,0 +1,10 @@
+{{template "_header.tmpl" .Breadcrumbs}}
+
+	<h2>Namespaces</h2>
+
+	{{$result := .Result}}
+	{{range $result.Namespaces}}
+		<a href="/{{$result.Context}}/{{.}}/deployments" class="btn btn-primary" role="button">{{.}}</a>
+	{{end}}
+
+{{template "_footer.tmpl"}}

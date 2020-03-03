@@ -3,10 +3,10 @@ package main
 import (
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -18,6 +18,11 @@ type kubeconfig struct {
 			Namespace string
 		}
 	}
+}
+
+type context struct {
+	client     *kubernetes.Clientset
+	namespaces []string
 }
 
 type kube struct {
@@ -49,13 +54,31 @@ func NewKube() (*kube, error) {
 	}, nil
 }
 
-func (k *kube) getNamespace(contextName string) string {
-	for _, v := range k.config.Contexts {
-		if strings.EqualFold(contextName, v.Name) {
-			return v.Context.Namespace
+func (k *kube) getContexts() (map[string]context, error) {
+	contexts := make(map[string]context)
+	for _, c := range k.config.Contexts {
+		client, err := k.buildClient(c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		namespaceList, err := client.CoreV1().Namespaces().List(metav1.ListOptions{})
+		if err != nil {
+			return nil, err
+		}
+
+		namespaces := make([]string, 0, len(namespaceList.Items))
+		for _, ns := range namespaceList.Items {
+			namespaces = append(namespaces, ns.Name)
+		}
+
+		contexts[c.Name] = context{
+			client:     client,
+			namespaces: namespaces,
 		}
 	}
-	return ""
+
+	return contexts, nil
 }
 
 func (k *kube) buildClient(context string) (*kubernetes.Clientset, error) {

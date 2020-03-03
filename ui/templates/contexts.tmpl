@@ -3,7 +3,7 @@
 	<h2>Contexts</h2>
 
 	{{range .Result.Contexts}}
-		<a href="/{{.Name}}/deployments" class="btn btn-primary" role="button">{{.Name}}</a>
+		<a href="/{{.Name}}" class="btn btn-primary" role="button">{{.Name}}</a>
 	{{end}}
 
 {{template "_footer.tmpl"}}
