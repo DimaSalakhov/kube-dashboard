@@ -14,7 +14,16 @@ func main() {
 	log.SetLevel(log.DebugLevel)
 	log.SetFormatter(&log.JSONFormatter{TimestampFormat: "2006-01-02T15:04:05.999-0700"})
 
-	h := MustNewHanlder()
+	kube, err := NewKube()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	releaseMonitor := NewReleaseMonitor(kube, []string{"dev", "qa"})
+
+	releaseMonitor.MustStart()
+
+	h := MustNewHanlder(kube)
 
 	log.Info("Up and running")
 
@@ -31,12 +40,7 @@ type handler struct {
 	contexts map[string]context
 }
 
-func MustNewHanlder() *handler {
-	kube, err := NewKube()
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func MustNewHanlder(kube *kube) *handler {
 	contexts, err := kube.getContexts()
 	if err != nil {
 		log.Fatal(err)
