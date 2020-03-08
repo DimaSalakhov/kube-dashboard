@@ -30,15 +30,10 @@ func NewReleaseMonitor(kube *kube, contexts []string) *releaseMonitor {
 
 func (m *releaseMonitor) MustStart() {
 	go func() {
-		contexts, err := m.kube.getContexts()
-		if err != nil {
-			log.Fatal(err)
-		}
-
 		for {
 			log.Debug("Polling deployments")
 
-			for ctxName, context := range contexts {
+			for ctxName, context := range m.kube.contexts {
 				deployments, err := context.client.AppsV1().Deployments("").List(metav1.ListOptions{})
 				if err != nil {
 					log.Error(errors.Wrapf(err, "Failed to get deployments for context [%s]", ctxName))

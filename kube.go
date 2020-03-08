@@ -26,8 +26,8 @@ type context struct {
 }
 
 type kube struct {
-	config     *kubeconfig
 	configPath string
+	contexts   map[string]context
 }
 
 func NewKube() (*kube, error) {
@@ -48,16 +48,21 @@ func NewKube() (*kube, error) {
 		return nil, errors.Wrap(err, "Failed to parse kube config")
 	}
 
+	contexts, err := getContexts(configPath, &config)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to build contexts")
+	}
+
 	return &kube{
-		config:     &config,
 		configPath: configPath,
+		contexts:   contexts,
 	}, nil
 }
 
-func (k *kube) getContexts() (map[string]context, error) {
+func getContexts(configPath string, config *kubeconfig) (map[string]context, error) {
 	contexts := make(map[string]context)
-	for _, c := range k.config.Contexts {
-		client, err := k.buildClient(c.Name)
+	for _, c := range config.Contexts {
+		client, err := buildClient(configPath, c.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -81,9 +86,9 @@ func (k *kube) getContexts() (map[string]context, error) {
 	return contexts, nil
 }
 
-func (k *kube) buildClient(context string) (*kubernetes.Clientset, error) {
+func buildClient(configPath string, context string) (*kubernetes.Clientset, error) {
 	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-		&clientcmd.ClientConfigLoadingRules{ExplicitPath: k.configPath},
+		&clientcmd.ClientConfigLoadingRules{ExplicitPath: configPath},
 		&clientcmd.ConfigOverrides{
 			CurrentContext: context,
 		}).ClientConfig()

@@ -36,26 +36,19 @@ func main() {
 }
 
 type handler struct {
-	kube     *kube
-	contexts map[string]context
+	kube *kube
 }
 
 func MustNewHanlder(kube *kube) *handler {
-	contexts, err := kube.getContexts()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	return &handler{
-		kube:     kube,
-		contexts: contexts,
+		kube: kube,
 	}
 }
 
 func (h *handler) getContexts(w http.ResponseWriter, r *http.Request) {
-	contexts := make([]struct{ Name string }, 0, len(h.kube.config.Contexts))
-	for _, v := range h.kube.config.Contexts {
-		contexts = append(contexts, struct{ Name string }{Name: v.Name})
+	contexts := make([]struct{ Name string }, 0, len(h.kube.contexts))
+	for context := range h.kube.contexts {
+		contexts = append(contexts, struct{ Name string }{Name: context})
 	}
 
 	renderTemplate(w, "ui/templates/contexts.tmpl", []breadcrumb{},
@@ -70,7 +63,7 @@ func (h *handler) contextDetails(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	context := params["context"]
 
-	ctx, ok := h.contexts[context]
+	ctx, ok := h.kube.contexts[context]
 	if !ok {
 		http.Error(w, fmt.Sprintf("Cannot find context [%s]", context), http.StatusNotFound)
 		return
@@ -94,7 +87,7 @@ func (h *handler) getDeployments(w http.ResponseWriter, r *http.Request) {
 	context := params["context"]
 	namespace := params["namespace"]
 
-	ctx, ok := h.contexts[context]
+	ctx, ok := h.kube.contexts[context]
 	if !ok {
 		http.Error(w, fmt.Sprintf("Cannot find context [%s]", context), http.StatusNotFound)
 		return
