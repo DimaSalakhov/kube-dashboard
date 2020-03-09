@@ -30,6 +30,7 @@ func NewReleaseMonitor(kube *kube, contexts []string) *releaseMonitor {
 
 func (m *releaseMonitor) MustStart() {
 	go func() {
+		notify := false
 		for {
 			log.Debug("Polling deployments")
 
@@ -37,7 +38,6 @@ func (m *releaseMonitor) MustStart() {
 				deployments, err := context.client.AppsV1().Deployments("").List(metav1.ListOptions{})
 				if err != nil {
 					log.Error(errors.Wrapf(err, "Failed to get deployments for context [%s]", ctxName))
-					return
 				}
 
 				for _, d := range deployments.Items {
@@ -46,12 +46,19 @@ func (m *releaseMonitor) MustStart() {
 					current, ok := m.deployments[key]
 					if !ok || strings.EqualFold(image, current.image) == false {
 						m.deployments[key] = deployment{image: image}
-						log.Infof("Deployment [%s] with image [%s] was released to [%s]", d.Name, image, ctxName)
+						if notify {
+							notifyDeploymetChange(d.Name, image, ctxName)
+						}
 					}
 				}
 			}
 
+			notify = true
 			time.Sleep(30 * time.Second)
 		}
 	}()
+}
+
+func notifyDeploymetChange(name string, image string, context string) {
+	log.Infof("Deployment [%s] with image [%s] was released to [%s]", name, image, context)
 }
