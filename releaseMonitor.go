@@ -20,10 +20,10 @@ type deployment struct {
 	image string
 }
 
-func NewReleaseMonitor(kube *kube, contexts []string) *releaseMonitor {
+func NewReleaseMonitor(kube *kube, config monitorConfig) *releaseMonitor {
 	return &releaseMonitor{
 		kube:        kube,
-		contexts:    contexts,
+		contexts:    config.Contexts,
 		deployments: make(map[string]deployment),
 	}
 }

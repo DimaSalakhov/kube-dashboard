@@ -14,12 +14,15 @@ func main() {
 	log.SetLevel(log.DebugLevel)
 	log.SetFormatter(&log.JSONFormatter{TimestampFormat: "2006-01-02T15:04:05.999-0700"})
 
-	kube, err := NewKube()
+	cfg := MustParseConfig()
+	log.WithField("config", cfg).Info("Configuration loaded")
+
+	kube, err := NewKube(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	releaseMonitor := NewReleaseMonitor(kube, []string{"dev", "qa"})
+	releaseMonitor := NewReleaseMonitor(kube, cfg.Monitor)
 
 	releaseMonitor.MustStart()
 

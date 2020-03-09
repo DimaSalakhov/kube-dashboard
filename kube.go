@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -26,19 +25,11 @@ type context struct {
 }
 
 type kube struct {
-	configPath string
-	contexts   map[string]context
+	contexts map[string]context
 }
 
-func NewKube() (*kube, error) {
-	dir, err := os.UserHomeDir()
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to obtain user's home dir")
-	}
-
-	configPath := filepath.Join(dir, ".kube", "config")
-
-	f, err := os.Open(configPath)
+func NewKube(cfg config) (*kube, error) {
+	f, err := os.Open(cfg.KubeconfigPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to open kube config")
 	}
@@ -48,18 +39,17 @@ func NewKube() (*kube, error) {
 		return nil, errors.Wrap(err, "Failed to parse kube config")
 	}
 
-	contexts, err := getContexts(configPath, &config)
+	contexts, err := buildContexts(cfg.KubeconfigPath, &config)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to build contexts")
 	}
 
 	return &kube{
-		configPath: configPath,
-		contexts:   contexts,
+		contexts: contexts,
 	}, nil
 }
 
-func getContexts(configPath string, config *kubeconfig) (map[string]context, error) {
+func buildContexts(configPath string, config *kubeconfig) (map[string]context, error) {
 	contexts := make(map[string]context)
 	for _, c := range config.Contexts {
 		client, err := buildClient(configPath, c.Name)
